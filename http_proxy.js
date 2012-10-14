@@ -84,7 +84,7 @@ var server = http.createServer(function (client_request, client_resp) {
           console.log('Filtering ' + rules[rule].name);
           var newData = rules[rule].filter(data);
           client_resp.setHeader('Content-length', newData.length);
-          client_resp.write(rules[rule].filter(data));
+          client_resp.write(newData);
         }
         client_resp.end();
       });
