@@ -1,8 +1,7 @@
-node-proxy - A Simple HTTP[S] Proxy Using Node.js
-=================================================
+node-filtering-proxy - HTTP proxy with rule based filtering
+===========================================================
 
-Very bare HTTP and SSL proxy implementation using node.js. 
-The primary goal of this project was to get acquainted with 
-node.js. 
+Quite simple. The rules are in the code. Implemented using [node.js](http://nodejs.org/).
 
-* [node.js](http://nodejs.org/)
+Based on [psanford/node-proxy](https://github.com/psanford/node-proxy).
+
