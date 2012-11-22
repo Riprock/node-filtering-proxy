@@ -12,6 +12,13 @@ var rules = [
     filter : function(data) {
       return data.replace(/<adverts>[\s\S]*<\/adverts>/, '');
     }
+  },
+  {
+    name: '4OD start ads',
+    match: /\/ad\/p\/1\?/,
+    filter: function() {
+      return '';
+    }
   }
 ];
 //rules = [];
