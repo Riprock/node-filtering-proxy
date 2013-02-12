@@ -20,6 +20,22 @@ var rules = [
     filter: function() {
       return '';
     }
+  },
+  {
+    name: 'STV player ad videos',
+    match: /^http:\/\/uk-dev-stv\..+?\.videoplaza\.tv\/creatives\/assets\//,
+    replace: true,
+    filter: function() {
+      return '';
+    }
+  },
+  {
+    name: 'STV player other ad videos',
+    match: /^http:\/\/http\.videologygroup\.com\/DSPMedia\/.*\.flv/,
+    replace: true,
+    filter: function() {
+      return '';
+    }
   }
 ];
 //rules = [];
