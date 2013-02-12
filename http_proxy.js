@@ -24,7 +24,8 @@ var rules = [
 //rules = [];
 
 var sys = require('sys'),
-    http = require('http');
+    http = require('http'),
+    net = require('net');
 
 var server = http.createServer(function (client_request, client_resp) {
   // sys.puts(sys.inspect(client_request.headers));
@@ -112,6 +113,34 @@ var server = http.createServer(function (client_request, client_resp) {
     });
 
     request.end();
+  });
+});
+
+// HTTPS
+server.on('connect', function(request, socket, head) {
+  var port;
+  request.url.replace(
+    /([^\/:]+)(?::(\d+))?(.*)/,
+    function(m, h, po, pa) {
+      port = po;
+    }
+  );
+  //debugger;
+  var rsocket = net.connect(port, request.headers.host, function() {
+    socket.write("HTTP/1.0 200\n");
+    socket.write("\n");
+  });
+  rsocket.on('data', function(data) {
+    socket.write(data);
+  });
+  socket.on('data', function(data) {
+    rsocket.write(data);
+  });
+  rsocket.on('close', function() {
+    socket.destroy();
+  });
+  rsocket.on('error', function(error) {
+    console.log(request.url + ' ' + error);
   });
 });
 
