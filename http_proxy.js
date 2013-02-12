@@ -158,3 +158,7 @@ server.on('connect', function(request, socket, head) {
 
 server.listen(8000);
 sys.puts('Server running at http://127.0.0.1:8000');
+
+// vim: set shiftwidth=2:
+// vim: set tabstop=2:
+// vim: set expandtab:
