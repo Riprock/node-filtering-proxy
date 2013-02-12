@@ -16,6 +16,7 @@ var rules = [
   {
     name: '4OD start ads',
     match: /\/ad\/p\/1\?/,
+    replace: true,
     filter: function() {
       return '';
     }
@@ -48,6 +49,17 @@ var server = http.createServer(function (client_request, client_resp) {
       rule = i;
       break;
     }
+  }
+
+  if (filtering && rules[rule].replace) {
+    // Useful if you know you don't want to wait
+    console.log('Rewriting ' + rules[rule].name);
+    console.log(client_request.url);
+    var data = rules[rule].filter();
+    client_resp.setHeader('Content-length', data.length);
+    client_resp.write(data);
+    client_resp.end();
+    return;
   }
 
   path = path || '/';
