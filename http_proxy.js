@@ -1,13 +1,12 @@
 /*
-  Rules and proxying all in one. Just `node http_proxy.js`.
+  Rules in rules.js, optional proxy in proxy.json. Just `node http_proxy.js`.
 */
 
 /*
   Currently matching is just the URL, and filters are functions.
 */
 
-var sys = require('sys'),
-    http = require('http'),
+var http = require('http'),
     net = require('net'),
     fs = require('fs');
 
@@ -43,10 +42,7 @@ monitorFileForProperty(config, 'rules', './rules.js', eval);
 
 //config.rules = []; // For testing.
 
-
 var server = http.createServer(function (client_request, client_resp) {
-  // sys.puts(sys.inspect(client_request.headers));
-
   var host;
   var port;
   var path;
@@ -80,7 +76,6 @@ var server = http.createServer(function (client_request, client_resp) {
 
   path = path || '/';
 
-  // sys.puts(client_request.method + " " + host + " " + path);
   var request_headers = client_request.headers;
   if (config.proxy.username) {
     request_headers['Proxy-authorization'] = 'Basic '
@@ -95,7 +90,7 @@ var server = http.createServer(function (client_request, client_resp) {
     headers : request_headers
   });
   
-  //Don't know if this is needed yet
+  // Don't know if this is needed yet
   request.on('continue', function() {
     console.log("Actually continuing - " + client_request.url);
     client_resp.writeContinue();
@@ -111,9 +106,7 @@ var server = http.createServer(function (client_request, client_resp) {
 
   client_request.addListener("end", function () {
     request.on('response', function (foreign_response) {
-      // sys.puts("STATUS: " + foreign_response.statusCode);
-      // sys.puts("HEADERS: " + JSON.stringify(foreign_response.headers));
-      
+      // If you want more info on responses
       //if (foreign_response.statusCode / 100 >= 4) {
       //  console.log(client_request.url + ' '
       //    + foreign_response.statusCode);
@@ -159,7 +152,6 @@ server.on('connect', function(request, socket, head) {
       port = po;
     }
   );
-  //debugger;
   var rsocket = net.connect(port, request.headers.host, function() {
     socket.write("HTTP/1.0 200\n");
     socket.write("\n");
@@ -174,12 +166,12 @@ server.on('connect', function(request, socket, head) {
     socket.destroy();
   });
   rsocket.on('error', function(error) {
-    console.log(request.url + ' ' + error);
+    console.log('HTTPS: ' + error + ' ' + request.url);
   });
 });
 
 server.listen(8000);
-sys.puts('Server running at http://127.0.0.1:8000');
+console.log('Server running at http://127.0.0.1:8000');
 
 // vim: set shiftwidth=2:
 // vim: set tabstop=2:
