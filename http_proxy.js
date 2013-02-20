@@ -5,39 +5,8 @@
 /*
   Currently matching is just the URL, and filters are functions.
 */
-var rules = [
-  {
-    name : '4OD ads',
-    match : /^http:\/\/ais\.channel4\.com\/asset\/.+/,
-    filter : function(data) {
-      return data.replace(/<adverts>[\s\S]*<\/adverts>/, '');
-    }
-  },
-  {
-    name: '4OD start ads',
-    match: /\/ad\/p\/1\?/,
-    replace: true,
-    filter: function() {
-      return '';
-    }
-  },
-  {
-    name: 'STV player ad videos',
-    match: /^http:\/\/uk-dev-stv\..+?\.videoplaza\.tv\/creatives\/assets\//,
-    replace: true,
-    filter: function() {
-      return '';
-    }
-  },
-  {
-    name: 'STV player other ad videos',
-    match: /^http:\/\/http\.videologygroup\.com\/DSPMedia\/.*\.flv/,
-    replace: true,
-    filter: function() {
-      return '';
-    }
-  }
-];
+var proxy = require('./proxy.json');
+var rules = require('./rules.js');
 //rules = [];
 
 var sys = require('sys'),
@@ -81,12 +50,18 @@ var server = http.createServer(function (client_request, client_resp) {
   path = path || '/';
 
   // sys.puts(client_request.method + " " + host + " " + path);
+  var request_headers = client_request.headers;
+  if (proxy.username) {
+    request_headers['Proxy-authorization'] = 'Basic '
+      + (new Buffer(proxy.username + ':' + proxy.password))
+      .toString('base64');
+  }
   var request = http.request({
     method : client_request.method,
-    hostname : host,
-    port: port || 80,
-    path : path,
-    headers : client_request.headers
+    hostname : proxy.host || host,
+    port: proxy.port || port || 80,
+    path : proxy.host ? client_request.url : path,
+    headers : request_headers
   });
   
   //Don't know if this is needed yet
