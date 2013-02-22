@@ -23,8 +23,16 @@
     }
   },
   {
-    "name": "STV player other ad videos",
+    "name": "STV player more ad videos",
     "match": /^http:\/\/http\.videologygroup\.com\/DSPMedia\/.*\.flv/,
+    "replace": true,
+    "filter": function() {
+      return "";
+    }
+  },
+  {
+    "name": "STV player more ad videos",
+    "match": /^http:\/\/static\.scanscout\.com\/filemanager\/.*\.flv/,
     "replace": true,
     "filter": function() {
       return "";

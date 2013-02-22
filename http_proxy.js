@@ -42,10 +42,14 @@ monitorFileForProperty(config, 'rules', './rules.js', eval);
 
 //config.rules = []; // For testing.
 
+var currentUrls = [];
+
 var server = http.createServer(function (client_request, client_resp) {
   var host;
   var port;
   var path;
+  
+  currentUrls.push(client_request.url);
 
   client_request.url.replace(/^http:\/\/([^\/:]+)(?::(\d+))?(.*)/, function(m, h, po, pa) {
     host = h;
@@ -71,13 +75,14 @@ var server = http.createServer(function (client_request, client_resp) {
     client_resp.setHeader('Content-length', data.length);
     client_resp.write(data);
     client_resp.end();
+    currentUrls.splice(currentUrls.indexOf(client_request.url), 1);
     return;
   }
 
   path = path || '/';
 
   var request_headers = client_request.headers;
-  if (config.proxy.username) {
+  if (config.proxy && config.proxy.username) {
     request_headers['Proxy-authorization'] = 'Basic '
       + (new Buffer(config.proxy.username + ':' + config.proxy.password))
       .toString('base64');
@@ -98,6 +103,7 @@ var server = http.createServer(function (client_request, client_resp) {
   
   request.on('error', function(error) {
     console.log('Request error: '+ error.message, host);
+    currentUrls.splice(currentUrls.indexOf(client_request.url), 1);
   });
   
   client_request.addListener("data", function (chunk) {
@@ -136,6 +142,7 @@ var server = http.createServer(function (client_request, client_resp) {
           client_resp.write(newData);
         }
         client_resp.end();
+        currentUrls.splice(currentUrls.indexOf(client_request.url), 1);
       });
     });
 
@@ -172,6 +179,16 @@ server.on('connect', function(request, socket, head) {
 
 server.listen(8000);
 console.log('Server running at http://127.0.0.1:8000');
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', function(chunk) {
+  if (chunk == "s\n") {
+    for (var i = 0; i < currentUrls.length; i++) {
+      console.log(currentUrls[i]);
+    }
+  }
+});
+process.stdin.resume();
 
 // vim: set shiftwidth=2:
 // vim: set tabstop=2:
