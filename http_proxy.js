@@ -5,13 +5,44 @@
 /*
   Currently matching is just the URL, and filters are functions.
 */
-var proxy = require('./proxy.json');
-var rules = require('./rules.js');
-//rules = [];
 
 var sys = require('sys'),
     http = require('http'),
-    net = require('net');
+    net = require('net'),
+    fs = require('fs');
+
+var monitorFileForProperty = function(object, property, file, wayToEval) {
+  // Use sync so property is always set after calling function
+  if (fs.existsSync(file)) {
+    try {
+      object[property] = wayToEval(fs.readFileSync(file, 'utf8'));
+    }
+    catch (err) {
+      object[property] = null;
+    }
+  }
+  // Then wait for changes, fs.watch doesn't seem to work on OS X
+  fs.watchFile(file, function (curr, prev) {
+    if (curr.mtime > prev.mtime) {
+      fs.readFile(file, function(err, data) {
+        try {
+          object[property] = wayToEval(data);
+        }
+        catch (err) {
+          object[property] = null;
+        }
+        console.log(property + ' updated');
+      });
+    }
+  });
+};
+
+var config = {};
+monitorFileForProperty(config, 'proxy', './proxy.json', JSON.parse);
+monitorFileForProperty(config, 'rules', './rules.js', eval);
+
+//config.rules = []; // For testing.
+
 
 var server = http.createServer(function (client_request, client_resp) {
   // sys.puts(sys.inspect(client_request.headers));
@@ -28,19 +59,19 @@ var server = http.createServer(function (client_request, client_resp) {
 
   var filtering = false;
   var rule;
-  for (var i = 0; i < rules.length; i++) {
-    if (rules[i].match.test(client_request.url)) {
+  for (var i = 0; i < config.rules.length; i++) {
+    if (config.rules[i].match.test(client_request.url)) {
       filtering = true;
       rule = i;
       break;
     }
   }
 
-  if (filtering && rules[rule].replace) {
+  if (filtering && config.rules[rule].replace) {
     // Useful if you know you don't want to wait
-    console.log('Rewriting ' + rules[rule].name);
+    console.log('Replacing ' + config.rules[rule].name);
     console.log(client_request.url);
-    var data = rules[rule].filter();
+    var data = config.rules[rule].filter();
     client_resp.setHeader('Content-length', data.length);
     client_resp.write(data);
     client_resp.end();
@@ -51,16 +82,16 @@ var server = http.createServer(function (client_request, client_resp) {
 
   // sys.puts(client_request.method + " " + host + " " + path);
   var request_headers = client_request.headers;
-  if (proxy.username) {
+  if (config.proxy.username) {
     request_headers['Proxy-authorization'] = 'Basic '
-      + (new Buffer(proxy.username + ':' + proxy.password))
+      + (new Buffer(config.proxy.username + ':' + config.proxy.password))
       .toString('base64');
   }
   var request = http.request({
     method : client_request.method,
-    hostname : proxy.host || host,
-    port: proxy.port || port || 80,
-    path : proxy.host ? client_request.url : path,
+    hostname : (config.proxy && config.proxy.host) || host,
+    port : (config.proxy && config.proxy.port) || port || 80,
+    path : (config.proxy && config.proxy.host) ? client_request.url : path,
     headers : request_headers
   });
   
@@ -104,9 +135,9 @@ var server = http.createServer(function (client_request, client_resp) {
       });
       foreign_response.on('end', function () {
         if (filtering) {
-          console.log('Filtering ' + rules[rule].name);
+          console.log('Filtering ' + config.rules[rule].name);
           console.log(client_request.url);
-          var newData = rules[rule].filter(data);
+          var newData = config.rules[rule].filter(data);
           //console.log(data);
           client_resp.setHeader('Content-length', newData.length);
           client_resp.write(newData);
