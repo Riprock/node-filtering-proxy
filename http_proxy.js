@@ -44,7 +44,38 @@ monitorFileForProperty(config, 'rules', './rules.js', eval);
 
 var currentUrls = [];
 
+var pacData =
+"function FindProxyForURL(url, host) {\n" +
+"var forProxy = [<<MATCHES>>];\n" +
+"for (var i = 0; i < forProxy.length; i++) {\n" +
+"  if (forProxy[i].test(url)) {\n" +
+"    return \"PROXY 127.0.0.1:8000\";\n" +
+"  }\n" +
+"}\n" +
+"return \"<<PROXY>>\";\n" +
+"}";
+
 var server = http.createServer(function (client_request, client_resp) {
+  if (client_request.url == '/proxy.pac') {
+    // Recalc this bit each time as rules and proxy can change
+    var justMatches = [];
+    for (var i = 0; i < config.rules.length; i++) {
+      justMatches.push(config.rules[i].match);
+    }
+    var proxyReturn = "DIRECT";
+    if (config.proxy.host) {
+      var proxyReturn = "PROXY " + config.proxy.host + ":" + 
+        config.proxy.port;
+    }
+    client_request.on('end', function() {
+      client_resp.write(pacData.replace('<<MATCHES>>', justMatches)
+        .replace('<<PROXY>>', proxyReturn));
+      client_resp.end();
+      console.log("PAC served");
+    });
+    return;
+  }
+  
   var host;
   var port;
   var path;
