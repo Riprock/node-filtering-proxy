@@ -22,7 +22,7 @@ var monitorFileForProperty = function(object, property, file, wayToEval) {
   }
   // Then wait for changes, fs.watch doesn't seem to work on OS X
   fs.watchFile(file, function (curr, prev) {
-    if (curr.mtime > prev.mtime) {
+    if (curr.mtime != prev.mtime) {
       fs.readFile(file, function(err, data) {
         try {
           object[property] = wayToEval(data);
