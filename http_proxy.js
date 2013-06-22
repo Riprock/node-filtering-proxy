@@ -59,11 +59,13 @@ var server = http.createServer(function (client_request, client_resp) {
   if (client_request.url == '/proxy.pac') {
     // Recalc this bit each time as rules and proxy can change
     var justMatches = [];
-    for (var i = 0; i < config.rules.length; i++) {
-      justMatches.push(config.rules[i].match);
+    if (config.rules) {
+      for (var i = 0; i < config.rules.length; i++) {
+        justMatches.push(config.rules[i].match);
+      }
     }
     var proxyReturn = "DIRECT";
-    if (config.proxy.host) {
+    if (config.proxy && config.proxy.host) {
       var proxyReturn = "PROXY " + config.proxy.host + ":" + 
         config.proxy.port;
     }
